@@ -1,6 +1,6 @@
 {
   "name": "ember-cli-poll",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A polling service addon for ember-cli.",
   "directories": {
     "doc": "doc",
