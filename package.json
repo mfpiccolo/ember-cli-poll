@@ -1,7 +1,7 @@
 {
   "name": "ember-cli-poll",
   "version": "0.0.1",
-  "description": "The default blueprint for ember-cli addons.",
+  "description": "A polling service addon for ember-cli.",
   "directories": {
     "doc": "doc",
     "test": "tests"
@@ -15,7 +15,7 @@
   "engines": {
     "node": ">= 0.10.0"
   },
-  "author": "",
+  "author": "Mike Piccolo <mfpiccolo@gmail.com>",
   "license": "MIT",
   "devDependencies": {
     "broccoli-asset-rev": "^2.0.2",
