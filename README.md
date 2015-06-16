@@ -1,25 +1,53 @@
-# Ember-cli-poll
+#  ember-cli-poll
 
-This README outlines the details of collaborating on this Ember addon.
+This is an npm package that contains a polling serivce for ember-data
+packaged as an [Ember CLI](https://github.com/stefanpenner/ember-cli) Addon.
 
 ## Installation
 
-* `git clone` this repository
-* `npm install`
-* `bower install`
+**Ember Poll requires at least Ember CLI 0.0.44.**
 
-## Running
+To install simply run
 
-* `ember server`
-* Visit your app at http://localhost:4200.
+```
+ember install ember-cli-poll
+```
 
-## Running Tests
+in your Ember CLI project's root.
 
-* `ember test`
-* `ember test --server`
+If you're using Ember CLI 0.2.2 or older, run
 
-## Building
+```
+ember install:addon ember-cli-poll
+```
 
-* `ember build`
+If you're using Ember CLI 0.1.4 or older, run
 
-For more information on using ember-cli, visit [http://www.ember-cli.com/](http://www.ember-cli.com/).
+```
+npm install --save-dev ember-cli-poll
+ember generate ember-cli-poll
+```
+
+## Usage
+
+In your route set the poll key to inject the service.
+
+```javascript
+var ExampleRoute = Ember.Route.extend({
+  poll: Ember.inject.service(),
+  ...
+});
+```
+
+Then you can setup polling for a record in the afterModel hook.
+
+```javascript
+var ExampleRoute = Ember.Route.extend({
+  ...
+  afterModel: function (model, transition) {
+    this.get('poll').setup(this, model.example_record);
+  },
+  ...
+});
+```
+
