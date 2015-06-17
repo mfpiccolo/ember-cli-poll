@@ -18,7 +18,7 @@ var Poll = Ember.Service.extend({
 
     route.set('interval_info', interval_info);
 
-    var reset = function () {
+    var reset = () => {
       route.set('interval_info.current_run_count', 1);
       route.set('interval_info.current_interval_delay', 1000);
       Ember.run.cancel(route.get('current_poll'));
