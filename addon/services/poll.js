@@ -2,6 +2,7 @@ import Ember from 'ember';
 
 var Poll = Ember.Service.extend({
   setup: function (route, record, interval_info) {
+    route.set('stop_poll', false);
     if (typeof(Ember.$.idle) !== "function") {
       this.setIdleListener();
     }
@@ -112,27 +113,29 @@ var Poll = Ember.Service.extend({
     };
   },
   run: function (record, route) {
-    var interval_info = route.get('interval_info');
-    var current_run_count = interval_info.current_run_count % (interval_info.repititions_per_itteration + 1);
-    var current_interval_delay = interval_info.current_interval_delay;
+    if (!route.get('stop_poll')) {
+      var interval_info = route.get('interval_info');
+      var current_run_count = interval_info.current_run_count % (interval_info.repititions_per_itteration + 1);
+      var current_interval_delay = interval_info.current_interval_delay;
 
-    var current_model = route.modelFor(route.routeName).contact;
-    var id = current_model.id;
-    if (this.reloadable(record) && id === record.id) {
-      if (current_run_count >= interval_info.repititions_per_itteration) {
-        current_interval_delay = interval_info.current_interval_delay * interval_info.muliplier;
-        route.set('interval_info.current_interval_delay', current_interval_delay);
-        route.set('interval_info.current_run_count', 1);
+      var current_model = route.modelFor(route.routeName).contact;
+      var id = current_model.id;
+      if (this.reloadable(record) && id === record.id) {
+        if (current_run_count >= interval_info.repititions_per_itteration) {
+          current_interval_delay = interval_info.current_interval_delay * interval_info.muliplier;
+          route.set('interval_info.current_interval_delay', current_interval_delay);
+          route.set('interval_info.current_run_count', 1);
+        }
+
+        route.set('interval_info.current_run_count', current_run_count + 1);
+
+        var poll = Ember.run.later(() => {
+          record.reload();
+          this.rerun(record, route);
+        }, current_interval_delay);
+
+        this.set('current_poll', poll);
       }
-
-      route.set('interval_info.current_run_count', current_run_count + 1);
-
-      var poll = Ember.run.later(() => {
-        record.reload();
-        this.rerun(record, route);
-      }, current_interval_delay);
-
-      this.set('current_poll', poll);
     }
   },
   rerun: function (record, route) {
