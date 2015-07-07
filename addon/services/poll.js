@@ -9,9 +9,9 @@ var Poll = Ember.Service.extend({
 
     if (!interval_info) {
       interval_info = Ember.Object.create({
-        repititions_per_itteration: 5,
+        repititions_per_iteration: 5,
         muliplier: 2,
-        max_interval_time: 60000,
+        idle_time: 60000,
         current_interval_delay: 1000,
         current_run_count: 0,
       });
@@ -28,12 +28,13 @@ var Poll = Ember.Service.extend({
 
     Ember.$(document).idle({
       onIdle: function(){
-        Ember.run.cancel(route.get('current_poll'));
+        route.set('stop_poll', true);
       },
       onActive: function(){
+        route.set('stop_poll', false);
         Ember.run.throttle(this, reset, 1000);
       },
-      idle: 10000
+      idle: interval_info.idle_time || 10000
     });
 
     this.run(record, route);
@@ -115,13 +116,14 @@ var Poll = Ember.Service.extend({
   run: function (record, route) {
     if (!route.get('stop_poll')) {
       var interval_info = route.get('interval_info');
-      var current_run_count = interval_info.current_run_count % (interval_info.repititions_per_itteration + 1);
+      var current_run_count = interval_info.current_run_count % (interval_info.repititions_per_iteration + 1);
       var current_interval_delay = interval_info.current_interval_delay;
+      var model_name = record.constructor.modelName;
 
-      var current_model = route.modelFor(route.routeName).contact;
+      var current_model = route.modelFor(route.routeName)[model_name];
       var id = current_model.id;
       if (this.reloadable(record) && id === record.id) {
-        if (current_run_count >= interval_info.repititions_per_itteration) {
+        if (current_run_count >= interval_info.repititions_per_iteration) {
           current_interval_delay = interval_info.current_interval_delay * interval_info.muliplier;
           route.set('interval_info.current_interval_delay', current_interval_delay);
           route.set('interval_info.current_run_count', 1);
