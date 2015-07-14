@@ -1,7 +1,7 @@
 import Ember from 'ember';
 
 var Poll = Ember.Service.extend({
-  setup: function (route, record, interval_info) {
+  setup: function (route, record, store, interval_info) {
     route.set('stop_poll', false);
     if (typeof(Ember.$.idle) !== "function") {
       this.setIdleListener();
@@ -23,7 +23,7 @@ var Poll = Ember.Service.extend({
       route.set('interval_info.current_run_count', 1);
       route.set('interval_info.current_interval_delay', 1000);
       Ember.run.cancel(route.get('current_poll'));
-      this.run(record, route);
+      this.run(record, route, store);
     };
 
     Ember.$(document).idle({
@@ -37,7 +37,7 @@ var Poll = Ember.Service.extend({
       idle: interval_info.idle_time || 10000
     });
 
-    this.run(record, route);
+    this.run(record, route, store);
   },
   reloadable: function (record) {
     return (
@@ -113,12 +113,17 @@ var Poll = Ember.Service.extend({
 
     };
   },
-  run: function (record, route) {
+  run: function (record, route, store, initial_run_time) {
+    var self = this;
     if (!route.get('stop_poll')) {
+      initial_run_time = initial_run_time || Date.now();
+      console.log(initial_run_time);
       var interval_info = route.get('interval_info');
       var current_run_count = interval_info.current_run_count % (interval_info.repititions_per_iteration + 1);
       var current_interval_delay = interval_info.current_interval_delay;
       var model_name = record.constructor.modelName;
+      var inflector = new Ember.Inflector(Ember.Inflector.defaultRules);
+      var endpoint = inflector.pluralize(model_name);
 
       var current_model = route.modelFor(route.routeName)[model_name];
       var id = current_model.id;
@@ -132,16 +137,25 @@ var Poll = Ember.Service.extend({
         route.set('interval_info.current_run_count', current_run_count + 1);
 
         var poll = Ember.run.later(() => {
-          record.reload();
-          this.rerun(record, route);
+          Ember.$.getJSON(`api/${endpoint}/${record.id}?poll_at=${initial_run_time}`, function( data ) {
+            if (data) {
+              // console.log(data[model_name]);
+              // store.push(model_name, data[model_name]);
+              record.reload();
+              initial_run_time = Date.now();
+              self.rerun(record, route, store, Date.now());
+            } else {
+              self.rerun(record, route, store, initial_run_time);
+            }
+          });
         }, current_interval_delay);
 
         this.set('current_poll', poll);
       }
     }
   },
-  rerun: function (record, route) {
-    this.run(record, route);
+  rerun: function (record, route, store, initial_run_time) {
+    this.run(record, route, store, initial_run_time);
   }
 });
 
