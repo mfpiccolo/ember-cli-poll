@@ -117,7 +117,6 @@ var Poll = Ember.Service.extend({
     var self = this;
     if (!route.get('stop_poll')) {
       initial_run_time = initial_run_time || Date.now();
-      console.log(initial_run_time);
       var interval_info = route.get('interval_info');
       var current_run_count = interval_info.current_run_count % (interval_info.repititions_per_iteration + 1);
       var current_interval_delay = interval_info.current_interval_delay;
@@ -139,8 +138,6 @@ var Poll = Ember.Service.extend({
         var poll = Ember.run.later(() => {
           Ember.$.getJSON(`api/${endpoint}/${record.id}?poll_at=${initial_run_time}`, function( data ) {
             if (data) {
-              // console.log(data[model_name]);
-              // store.push(model_name, data[model_name]);
               record.reload();
               initial_run_time = Date.now();
               self.rerun(record, route, store, Date.now());
