@@ -41,13 +41,12 @@ var Poll = Ember.Service.extend({
   },
   reloadable: function (record) {
     return (
-        record.get('isLoaded')  &&
-        // TODO: use hasDirtyAttributes instead of isDirty
-      ! record.get('isDirty')   &&
-      ! record.get('isSaving')  &&
-      ! record.get('isDeleted') &&
-      ! record.get('isError')   &&
-      ! record.get('isNew')     &&
+        record.get('isLoaded')           &&
+      ! record.get('hasDirtyAttributes') &&
+      ! record.get('isSaving')           &&
+      ! record.get('isDeleted')          &&
+      ! record.get('isError')            &&
+      ! record.get('isNew')              &&
         record.get('isValid')
     );
   },
