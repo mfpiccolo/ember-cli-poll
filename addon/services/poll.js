@@ -1,54 +1,45 @@
 import Ember from 'ember';
 
 var Poll = Ember.Service.extend({
-  setup: function (route, record, store, interval_info) {
-    route.set('stop_poll', false);
+  storage: Ember.inject.service('store'),
+  setup: function (resource_name, path, params) {
+    var self = this;
+    self.set('polls', self.get('polls') || {});
+    var polls = self.get('polls');
+    polls[resource_name] = {path: path, params: params};
+
     if (typeof(Ember.$.idle) !== "function") {
-      this.setIdleListener();
+      self.setIdleListener();
     }
-
-    if (!interval_info) {
-      interval_info = Ember.Object.create({
-        repititions_per_iteration: 5,
-        muliplier: 2,
-        idle_time: 60000,
-        current_interval_delay: 1000,
-        current_run_count: 0,
-      });
-    }
-
-    route.set('interval_info', interval_info);
-
-    var reset = () => {
-      route.set('interval_info.current_run_count', 1);
-      route.set('interval_info.current_interval_delay', 1000);
-      Ember.run.cancel(route.get('current_poll'));
-      this.run(record, route, store);
-    };
 
     Ember.$(document).idle({
       onIdle: function(){
-        route.set('stop_poll', true);
+        self.removePoll(resource_name);
       },
       onActive: function(){
-        route.set('stop_poll', false);
-        Ember.run.throttle(this, reset, 1000);
+        self.setup(resource_name, path, params);
       },
-      idle: interval_info.idle_time || 10000
+      idle: 30000,
     });
-
-    this.run(record, route, store);
   },
-  reloadable: function (record) {
-    return (
-        record.get('isLoaded')           &&
-      ! record.get('hasDirtyAttributes') &&
-      ! record.get('isSaving')           &&
-      ! record.get('isDeleted')          &&
-      ! record.get('isError')            &&
-      ! record.get('isNew')              &&
-        record.get('isValid')
-    );
+  run: function () {
+    var self = this;
+    var polls = this.get('polls');
+    var store = self.get('storage');
+    if (Object.keys(polls).length) {
+      Object.keys(polls).forEach(function (resource_name) {
+        var path = polls[resource_name]['path'];
+        var params = polls[resource_name]['params'];
+
+        Ember.$.getJSON(path + params, function( data ) {
+          store.pushPayload('activity_group', data);
+        });
+      });
+    }
+  },
+  removePoll: function (resource_name) {
+    var polls = this.get('polls');
+    delete polls[resource_name];
   },
   setIdleListener: function () {
     Ember.$.fn.idle = function (options) {
@@ -113,47 +104,6 @@ var Poll = Ember.Service.extend({
 
     };
   },
-  run: function (record, route, store, initial_run_time) {
-    var self = this;
-    if (!route.get('stop_poll')) {
-      initial_run_time = initial_run_time || Date.now();
-      var interval_info = route.get('interval_info');
-      var current_run_count = interval_info.current_run_count % (interval_info.repititions_per_iteration + 1);
-      var current_interval_delay = interval_info.current_interval_delay;
-      var model_name = record.constructor.modelName;
-      var inflector = new Ember.Inflector(Ember.Inflector.defaultRules);
-      var endpoint = inflector.pluralize(model_name);
-
-      var current_model = route.modelFor(route.routeName)[model_name];
-      var id = current_model.id;
-      if (this.reloadable(record) && id === record.id) {
-        if (current_run_count >= interval_info.repititions_per_iteration) {
-          current_interval_delay = interval_info.current_interval_delay * interval_info.muliplier;
-          route.set('interval_info.current_interval_delay', current_interval_delay);
-          route.set('interval_info.current_run_count', 1);
-        }
-
-        route.set('interval_info.current_run_count', current_run_count + 1);
-
-        var poll = Ember.run.later(() => {
-          Ember.$.getJSON(`api/${endpoint}/${record.id}?poll_at=${initial_run_time}`, function( data ) {
-            if (data) {
-              record.reload();
-              initial_run_time = Date.now();
-              self.rerun(record, route, store, Date.now());
-            } else {
-              self.rerun(record, route, store, initial_run_time);
-            }
-          });
-        }, current_interval_delay);
-
-        this.set('current_poll', poll);
-      }
-    }
-  },
-  rerun: function (record, route, store, initial_run_time) {
-    this.run(record, route, store, initial_run_time);
-  }
 });
 
 export default Poll;
