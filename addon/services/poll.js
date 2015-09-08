@@ -7,34 +7,44 @@ var Poll = Ember.Service.extend({
     self.set('polls', self.get('polls') || {});
     var polls = self.get('polls');
     polls[resource_name] = {path: path, params: params};
-
+  },
+  start: function () {
+    var self = this;
     if (typeof(Ember.$.idle) !== "function") {
       self.setIdleListener();
     }
 
     Ember.$(document).idle({
-      onIdle: function(){
-        self.removePoll(resource_name);
+      onIdle: function() {
+        self.set('pause', true);
       },
-      onActive: function(){
-        self.setup(resource_name, path, params);
+      onActive: function() {
+        self.set('pause', false);
       },
-      idle: 30000,
+      idle: 10000,
     });
+
+    setInterval(() => {
+      if (!self.get('pause')) {
+        self.run();
+      }
+    }, 2000);
   },
   run: function () {
     var self = this;
     var polls = this.get('polls');
-    var store = self.get('storage');
-    if (Object.keys(polls).length) {
-      Object.keys(polls).forEach(function (resource_name) {
-        var path = polls[resource_name]['path'];
-        var params = polls[resource_name]['params'];
+    if (polls) {
+      var store = self.get('storage');
+      if (Object.keys(polls).length) {
+        Object.keys(polls).forEach(function (resource_name) {
+          var path = polls[resource_name]['path'];
+          var params = polls[resource_name]['params'];
 
-        Ember.$.getJSON(path + params, function( data ) {
-          store.pushPayload(resource_name, data);
+          Ember.$.getJSON(path + params, function( data ) {
+            store.pushPayload(resource_name, data);
+          });
         });
-      });
+      }
     }
   },
   removePoll: function (resource_name) {
@@ -101,7 +111,6 @@ var Poll = Ember.Service.extend({
           });
         }
       });
-
     };
   },
 });
