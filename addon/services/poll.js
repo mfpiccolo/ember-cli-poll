@@ -10,6 +10,7 @@ var Poll = Ember.Service.extend({
   },
   start: function (opts) {
     var idle_timeout = opts['idle_timeout'] || 10000;
+    var interval = opts['interval'] || 2000;
     var self = this;
     if (typeof(Ember.$.idle) !== "function") {
       self.setIdleListener();
@@ -29,7 +30,7 @@ var Poll = Ember.Service.extend({
       if (!self.get('pause')) {
         self.run();
       }
-    }, 2000);
+    }, interval);
   },
   run: function () {
     var self = this;
