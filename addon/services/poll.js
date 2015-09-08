@@ -8,7 +8,8 @@ var Poll = Ember.Service.extend({
     var polls = self.get('polls');
     polls[resource_name] = {path: path, params: params};
   },
-  start: function () {
+  start: function (opts) {
+    var idle_timeout = opts['idle_timeout'] || 10000;
     var self = this;
     if (typeof(Ember.$.idle) !== "function") {
       self.setIdleListener();
@@ -21,7 +22,7 @@ var Poll = Ember.Service.extend({
       onActive: function() {
         self.set('pause', false);
       },
-      idle: 10000,
+      idle: idle_timeout,
     });
 
     setInterval(() => {
