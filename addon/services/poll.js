@@ -32,7 +32,7 @@ var Poll = Ember.Service.extend({
         var params = polls[resource_name]['params'];
 
         Ember.$.getJSON(path + params, function( data ) {
-          store.pushPayload('activity_group', data);
+          store.pushPayload(resource_name, data);
         });
       });
     }
