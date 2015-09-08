@@ -2,11 +2,11 @@ import Ember from 'ember';
 
 var Poll = Ember.Service.extend({
   storage: Ember.inject.service('store'),
-  setup: function (resource_name, path, params) {
+  setup: function (resource_name, url) {
     var self = this;
     self.set('polls', self.get('polls') || {});
     var polls = self.get('polls');
-    polls[resource_name] = {path: path, params: params};
+    polls[resource_name] = {url: url};
   },
   start: function (opts) {
     var idle_timeout = opts['idle_timeout'] || 10000;
@@ -39,10 +39,9 @@ var Poll = Ember.Service.extend({
       var store = self.get('storage');
       if (Object.keys(polls).length) {
         Object.keys(polls).forEach(function (resource_name) {
-          var path = polls[resource_name]['path'];
-          var params = polls[resource_name]['params'];
+          var url = polls[resource_name]['url'];
 
-          Ember.$.getJSON(path + params, function( data ) {
+          Ember.$.getJSON(url, function( data ) {
             store.pushPayload(resource_name, data);
           });
         });
