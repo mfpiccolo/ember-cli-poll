@@ -2,15 +2,20 @@ import Ember from 'ember';
 
 var Poll = Ember.Service.extend({
   storage: Ember.inject.service('store'),
-  setup: function (resource_name, url) {
+  setup: function (resource_name, url, params) {
     var self = this;
     self.set('polls', self.get('polls') || {});
     var polls = self.get('polls');
-    polls[resource_name] = {url: url};
+    params = params || {};
+    params.poll_at = Date.now();
+    polls[resource_name] = {
+      url: url,
+      params: params,
+    };
   },
   start: function (opts) {
-    var idle_timeout = opts['idle_timeout'] || 10000;
-    var interval = opts['interval'] || 2000;
+    var idle_timeout = opts.idle_timeout|| 10000;
+    var interval = opts.interval || 2000;
     var self = this;
     if (typeof(Ember.$.idle) !== "function") {
       self.setIdleListener();
@@ -39,10 +44,15 @@ var Poll = Ember.Service.extend({
       var store = self.get('storage');
       if (Object.keys(polls).length) {
         Object.keys(polls).forEach(function (resource_name) {
-          var url = polls[resource_name]['url'];
+          var url = polls[resource_name].url;
+          var params = polls[resource_name].params;
+          url += `?${Ember.$.param(params)}`;
 
-          Ember.$.getJSON(url, function( data ) {
-            store.pushPayload(resource_name, data);
+          Ember.$.getJSON(url, function(data, status, response) {
+            if (response.status === 200) {
+              store.pushPayload(resource_name, data);
+              params.poll_at = Date.now();
+            }
           });
         });
       }
