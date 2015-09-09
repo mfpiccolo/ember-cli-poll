@@ -5,8 +5,6 @@ packaged as an [Ember CLI](https://github.com/stefanpenner/ember-cli) Addon.
 
 ## Installation
 
-**Ember Poll requires at least Ember CLI 0.0.44.**
-
 To install simply run
 
 ```
@@ -15,39 +13,78 @@ ember install ember-cli-poll
 
 in your Ember CLI project's root.
 
-If you're using Ember CLI 0.2.2 or older, run
-
-```
-ember install:addon ember-cli-poll
-```
-
-If you're using Ember CLI 0.1.4 or older, run
-
-```
-npm install --save-dev ember-cli-poll
-ember generate ember-cli-poll
-```
 
 ## Usage
 
-In your route set the poll key to inject the service.
+In your route start up the polling service.
 
 ```javascript
+import Ember from 'ember';
+
+var ApplicationRoute = Ember.Route.extend({
+  poll: Ember.inject.service(),
+  afterModel: function () {
+    this._super(...arguments);
+    this.get('poll').start({
+      idle_timeout: 10000,
+      interval: 2000,
+    });
+  }
+});
+
+export default ApplicationRoute;
+```
+
+Then from a route, you can setup polling for a resource in the afterModel hook and remove
+it in a will transition
+
+```javascript
+
+
 var ExampleRoute = Ember.Route.extend({
   poll: Ember.inject.service(),
+  ...
+  afterModel: function (model, transition) {
+    this.get('poll').setup(
+      'contacts', // a resource name
+      `http://some_domain.com/contacts/${contact_id}` // url to fetch resource
+    );
+  },
+  actions: {
+    willTransition: function (transition) {
+      this._super(transition);
+      this.get('poll').removePoll('contacts'); // remove the resource from polling
+    },
+  }
   ...
 });
 ```
 
-Then you can setup polling for a record in the afterModel hook.
+Or you can use it with a component using the lifecycle hooks.
 
 ```javascript
-var ExampleRoute = Ember.Route.extend({
-  ...
-  afterModel: function (model, transition) {
-    this.get('poll').setup(this, model.example_record);
+var SomeComponent = Ember.component.extend({
+  poll: Ember.inject.service(),
+  didInsertElement: function () {
+    this._super();
+    if (ENV.ENABLE_POLLING === 'true') {
+      var query_params = {
+        some_param: 'some_value',
+        other_param: 'other_value'
+      };
+      this.get('poll').setup(
+        'users', // resource name
+        `http://some_domain.com/users`, // url to fetch resource
+        query_params // query params
+      );
+    }
   },
-  ...
+  willDestroy: function () {
+    this._super();
+    this.get('poll').removePoll('users'); // remove resource from polling
+  }
 });
+
+export default SomeComponent;
 ```
 
