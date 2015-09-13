@@ -67,17 +67,15 @@ var SomeComponent = Ember.component.extend({
   poll: Ember.inject.service(),
   didInsertElement: function () {
     this._super();
-    if (ENV.ENABLE_POLLING === 'true') {
-      var query_params = {
-        some_param: 'some_value',
-        other_param: 'other_value'
-      };
-      this.get('poll').setup(
-        'users', // resource name
-        `http://some_domain.com/users`, // url to fetch resource
-        query_params // query params
-      );
-    }
+    var query_params = {
+      some_param: 'some_value',
+      other_param: 'other_value'
+    };
+    this.get('poll').setup(
+      'users', // resource name
+      `http://some_domain.com/users`, // url to fetch resource
+      query_params // query params
+    );
   },
   willDestroy: function () {
     this._super();
