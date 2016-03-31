@@ -1,6 +1,6 @@
 #  ember-cli-poll
 
-This is an npm package that contains a polling serivce for ember-data
+This is a fork of an npm package that contains a polling serivce for ember-data
 packaged as an [Ember CLI](https://github.com/stefanpenner/ember-cli) Addon.
 
 ## Installation
@@ -8,7 +8,7 @@ packaged as an [Ember CLI](https://github.com/stefanpenner/ember-cli) Addon.
 To install simply run
 
 ```
-ember install ember-cli-poll
+ember install https://github.com/Biteable/ember-cli-poll.git
 ```
 
 in your Ember CLI project's root.
@@ -26,7 +26,7 @@ var ApplicationRoute = Ember.Route.extend({
   afterModel: function () {
     this._super(...arguments);
     this.get('poll').start({
-      idle_timeout: 10000,
+      idleTimeout: 10000,
       interval: 2000,
     });
   }
@@ -45,15 +45,16 @@ var ExampleRoute = Ember.Route.extend({
   poll: Ember.inject.service(),
   ...
   afterModel: function (model, transition) {
-    this.get('poll').setup(
-      'contacts', // a resource name
-      `http://some_domain.com/contacts/${contact_id}` // url to fetch resource
-    );
+    this.get('poll').setup({
+      pollName: 'myContactsPoll', // poll name should be unique
+      resourceName: 'contacts', // a resource name
+      url: `http://some_domain.com/contacts/${contactId}` // url to fetch resource
+    });
   },
   actions: {
     willTransition: function (transition) {
       this._super(transition);
-      this.get('poll').removePoll('contacts'); // remove the resource from polling
+      this.get('poll').removePoll('myContactsPoll'); // remove from polling
     },
   }
   ...
@@ -71,15 +72,16 @@ var SomeComponent = Ember.component.extend({
       some_param: 'some_value',
       other_param: 'other_value'
     };
-    this.get('poll').setup(
-      'users', // resource name
-      `http://some_domain.com/users`, // url to fetch resource
-      query_params // query params
-    );
+    this.get('poll').setup({
+      pollName: 'usersPoll',
+      resourceName: 'users', // resource name
+      url: `http://some_domain.com/users`, // url to fetch resource
+      params: query_params // query params
+    });
   },
   willDestroy: function () {
     this._super();
-    this.get('poll').removePoll('users'); // remove resource from polling
+    this.get('poll').removePoll('usersPoll'); // remove from polling
   }
 });
 

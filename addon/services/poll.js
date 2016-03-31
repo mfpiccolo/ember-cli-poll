@@ -2,19 +2,20 @@ import Ember from 'ember';
 
 var Poll = Ember.Service.extend({
   storage: Ember.inject.service('store'),
-  setup: function (resource_name, url, params) {
+  setup: function (opts) {
     var self = this;
     self.set('polls', self.get('polls') || {});
     var polls = self.get('polls');
-    params = params || {};
+    var params = opts.params || {};
     params.poll_at = Date.now();
-    polls[resource_name] = {
-      url: url,
-      params: params,
+    polls[opts.name] = {
+      resource_name: opts.resource_name,
+      url: opts.url,
+      params: params
     };
   },
   start: function (opts) {
-    var idle_timeout = opts.idle_timeout|| 10000;
+    var idle_timeout = opts.idle_timeout || 10000;
     var interval = opts.interval || 2000;
     var self = this;
     if (typeof(Ember.$.idle) !== "function") {
@@ -28,7 +29,7 @@ var Poll = Ember.Service.extend({
       onActive: function() {
         self.set('pause', false);
       },
-      idle: idle_timeout,
+      idle: idle_timeout
     });
 
     setInterval(() => {
@@ -43,14 +44,14 @@ var Poll = Ember.Service.extend({
     if (polls) {
       var store = self.get('storage');
       if (Object.keys(polls).length) {
-        Object.keys(polls).forEach(function (resource_name) {
-          var url = polls[resource_name].url;
-          var params = polls[resource_name].params;
+        Object.keys(polls).forEach(function (name) {
+          var url = polls[name].url;
+          var params = polls[name].params;
           url += `?${Ember.$.param(params)}`;
 
           Ember.$.getJSON(url, function(data, status, response) {
             if (response.status === 200) {
-              store.pushPayload(resource_name, data);
+              store.pushPayload(polls[name].resource_name, data);
               params.poll_at = Date.now();
             }
           });
@@ -58,9 +59,9 @@ var Poll = Ember.Service.extend({
       }
     }
   },
-  removePoll: function (resource_name) {
+  removePoll: function (name) {
     var polls = this.get('polls');
-    delete polls[resource_name];
+    delete polls[name];
   },
   setIdleListener: function () {
     Ember.$.fn.idle = function (options) {
