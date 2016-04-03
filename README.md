@@ -45,15 +45,16 @@ var ExampleRoute = Ember.Route.extend({
   poll: Ember.inject.service(),
   ...
   afterModel: function (model, transition) {
-    this.get('poll').setup(
-      'contacts', // a resource name
-      `http://some_domain.com/contacts/${contact_id}` // url to fetch resource
-    );
+    this.get('poll').setup({
+      name: 'contactsPoll', // a poll name should be unique
+      resource_name: 'contacts', // a resource name
+      url: `http://some_domain.com/contacts/${contact_id}` // url to fetch resource
+    });
   },
   actions: {
     willTransition: function (transition) {
       this._super(transition);
-      this.get('poll').removePoll('contacts'); // remove the resource from polling
+      this.get('poll').removePoll('contactsPoll'); // remove the resource from polling
     },
   }
   ...
@@ -71,15 +72,16 @@ var SomeComponent = Ember.component.extend({
       some_param: 'some_value',
       other_param: 'other_value'
     };
-    this.get('poll').setup(
-      'users', // resource name
-      `http://some_domain.com/users`, // url to fetch resource
-      query_params // query params
-    );
+    this.get('poll').setup({
+      name: 'usersPoll', // a poll name should be unique
+      resource_name: 'users', // resource name
+      url: `http://some_domain.com/users`, // url to fetch resource
+      params: query_params // query params
+    });
   },
   willDestroy: function () {
     this._super();
-    this.get('poll').removePoll('users'); // remove resource from polling
+    this.get('poll').removePoll('usersPoll'); // remove resource from polling
   }
 });
 
