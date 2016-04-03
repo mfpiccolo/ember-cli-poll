@@ -1,6 +1,6 @@
 #  ember-cli-poll
 
-This is a fork of an npm package that contains a polling serivce for ember-data
+This is an npm package that contains a polling serivce for ember-data
 packaged as an [Ember CLI](https://github.com/stefanpenner/ember-cli) Addon.
 
 ## Installation
@@ -8,7 +8,7 @@ packaged as an [Ember CLI](https://github.com/stefanpenner/ember-cli) Addon.
 To install simply run
 
 ```
-ember install https://github.com/Biteable/ember-cli-poll.git
+ember install ember-cli-poll
 ```
 
 in your Ember CLI project's root.
@@ -26,7 +26,7 @@ var ApplicationRoute = Ember.Route.extend({
   afterModel: function () {
     this._super(...arguments);
     this.get('poll').start({
-      idleTimeout: 10000,
+      idle_timeout: 10000,
       interval: 2000,
     });
   }
